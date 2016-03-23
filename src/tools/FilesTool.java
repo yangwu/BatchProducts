@@ -18,6 +18,9 @@ import javax.imageio.ImageIO;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 
+import constant.BatchConfig;
+import db.DBHelper;
+
 /**
  * 
  * FTPClient上传产品图片到服务器时， 本机需要关闭防火墙
@@ -30,7 +33,7 @@ public class FilesTool {
 	public final static String IMAGE_EXTENTION = "jpg";
 	public final static String IMAGE_PREFIX = "http://wishconsole.com/images/";
 
-	public final static String MAIN_IMAGE = "1.jpg";
+	public final static String MAIN_IMAGE1 = "1.jpg";
 	public final static String EXTRA_IMAGE1 = "2.jpg";
 	public final static String EXTRA_IMAGE2 = "3.jpg";
 	public final static String EXTRA_IMAGE3 = "4.jpg";
@@ -51,7 +54,6 @@ public class FilesTool {
 			return;
 		}
 		File[] subFiles = products.listFiles();
-
 		// 处理各个产品目录
 		for (int k = 0; k < subFiles.length; k++) {
 			File file = subFiles[k];
@@ -102,35 +104,35 @@ public class FilesTool {
 					out = new FileOutputStream(txtFile);
 					System.out.println("start to write:");
 
-					String name = "Name:"
+					String name = BatchConfig.NAME + ":"
 							+ BaiduTranslateDemo.translateToEn(file.getName())
-							+ file.getName();
+							+ file.getName() + "\n";
 					out.write(name.getBytes("utf-8"));
 
-					String sku = "Parent_sku:stk_"
+					String sku = BatchConfig.PARENT_SKU + ":stk_"
 							+ this.getLastBracketContent(file.getName()) + "\n";
 					out.write((sku).getBytes("utf-8"));
 
-					String desc = "Description:Fashion DIY wall sticker, size: 60 * 90 cm, you can compose it by yourself.\n";
+					String desc = BatchConfig.DESCRIPTION + ":Fashion DIY wall sticker, size: 60 * 90 cm, you can compose it by yourself.\n";
 					out.write(desc.getBytes("utf-8"));
 
-					String tags = "Tags:sticker,wall sticker,home decor,vinyl wall sticker,wall decals&sticker,decals wall sticker,cartoon wall sticker,living room wall sticker,cute wall sticker,removable wall sticker \n";
+					String tags = BatchConfig.TAGS + ":sticker,wall sticker,home decor,vinyl wall sticker,wall decals&sticker,decals wall sticker,cartoon wall sticker,living room wall sticker,cute wall sticker,removable wall sticker \n";
 					out.write(tags.getBytes("utf-8"));
-
-					out.write(("Color:\n").getBytes("utf-8"));
-					out.write(("Size:\n").getBytes("utf-8"));
-					out.write(("Price:\n").getBytes("utf-8"));
-					out.write(("IncrementPrice:\n").getBytes("utf-8"));
-					out.write(("Quantity:10\n").getBytes("utf-8"));
-					out.write(("shipping:\n").getBytes("utf-8"));
-					out.write(("shippingtime:7-30\n").getBytes("utf-8"));
-					out.write(("MSRP:\n").getBytes("utf-8"));
-					out.write(("Brand:\n").getBytes("utf-8"));
-					out.write(("UPC:\n").getBytes("utf-8"));
-					out.write(("LandingPageURL:\n").getBytes("utf-8"));
-					out.write(("SourceURL:" + products.getName() + "/"
+					
+					out.write((BatchConfig.COLOR + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.SIZE + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.PRICE + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.INCREMENT_PRICE + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.QUANTITY + ":10\n").getBytes("utf-8"));
+					out.write((BatchConfig.SHIPPING + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.SHIPPINGTIME + ":7-30\n").getBytes("utf-8"));
+					out.write((BatchConfig.MSRP + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.BRAND + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.UPC + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.LANDINGPAGEURL + ":\n").getBytes("utf-8"));
+					out.write((BatchConfig.SOURCEURL + ":" + products.getName() + "/"
 							+ file.getName() + "\n").getBytes("utf-8"));
-					out.write(("SchedultTime:\n").getBytes("utf-8"));
+					out.write((BatchConfig.SCHEDULETIME + ":\n").getBytes("utf-8"));
 
 					out.flush();
 					out.close();
@@ -250,14 +252,13 @@ public class FilesTool {
 						BufferedReader br = null;
 						try {
 							fis = new FileInputStream(child);
-							isr = new InputStreamReader(fis);
+							isr = new InputStreamReader(fis,"utf-8");
 							br = new BufferedReader(isr);
 							String temp = null;
 							while ((temp = br.readLine()) != null) {
 								System.out.println("Line:" + temp);
 								int index = temp.indexOf(":");
-								productValue.put(temp.substring(0, index),
-										temp.substring(index+1));
+								productValue.put(temp.substring(0, index),temp.substring(index+1));
 							}
 							br.close();
 							isr.close();
@@ -280,13 +281,13 @@ public class FilesTool {
 						}
 					}
 				}
-
+				/*
 				Map<String, String> newImages = this.uploadImagesToServer(file);
 				if (newImages.size() > 0) {
-					if (newImages.get(MAIN_IMAGE) != null) {
+					if (newImages.get(MAIN_IMAGE1) != null) {
 
-						productValue.put("Main_image",
-								IMAGE_PREFIX + newImages.get(MAIN_IMAGE));
+						productValue.put(BatchConfig.MAINIMAGE,
+								IMAGE_PREFIX + newImages.get(MAIN_IMAGE1));
 					}
 
 					String extraImages = "";
@@ -310,8 +311,9 @@ public class FilesTool {
 							+ newImages.get(EXTRA_IMAGE6)
 							: "";
 
-					productValue.put("Extra_images", extraImages);
+					productValue.put(BatchConfig.EXTRAIMAGES, extraImages);
 				}
+				*/
 
 				insertdb(productValue);
 			}
@@ -325,5 +327,15 @@ public class FilesTool {
 			String key = it.next();
 			System.out.println(key + ":" + productValue.get(key));
 		}
+		
+		productValue.put(BatchConfig.ACCOUNTID, "2");//默认使用wish账号2
+		//insert product source;
+		DBHelper helper = new DBHelper();
+		helper.insertProductSource(productValue);
+		
+		
+		//insert product;
+		
+		//insert schedule;
 	}
 }
