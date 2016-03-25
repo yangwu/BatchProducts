@@ -8,8 +8,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
@@ -19,7 +22,6 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 
 import constant.BatchConfig;
-import db.DBHelper;
 
 /**
  * 
@@ -226,10 +228,11 @@ public class FilesTool {
 	}
 
 	/**
-	 * 第二步为用户手动处理read.txt文件和图片。 第三步： command=3; 读取
-	 * read.txt文件，并把图片和信息保存到服务器上。服务器会自动定时上传产品。
+	 * 第二步为用户手动处理read.txt文件和图片。 
+	 * 第三步： command=3; 读取
+	 * read.txt文件，并把图片和信息发送到服务器上保存。服务器会自动定时上传产品。
 	 * */
-	public void parseDirectoryTxt(String fileName) {
+	public void parseDirectoryTxt(String fileName,int accountid,String datetime,int minutes) {
 		File products = new File(fileName);
 
 		if (!products.exists()) {
@@ -238,6 +241,16 @@ public class FilesTool {
 		}
 		File[] subFiles = products.listFiles();
 
+		SimpleDateFormat dbtime=new SimpleDateFormat("yyyy-MM-dd HH:mm");
+		Date initDate;
+		try {
+			initDate = dbtime.parse(datetime);
+		} catch (ParseException e1) {
+			// TODO Auto-generated catch block
+			System.out.println("the datetime format error");
+			initDate = Calendar.getInstance().getTime();
+		}
+		
 		for (int k = 0; k < subFiles.length; k++) {
 			File file = subFiles[k];
 			if (file.isDirectory()) {
@@ -281,7 +294,7 @@ public class FilesTool {
 						}
 					}
 				}
-				/*
+				
 				Map<String, String> newImages = this.uploadImagesToServer(file);
 				if (newImages.size() > 0) {
 					if (newImages.get(MAIN_IMAGE1) != null) {
@@ -313,29 +326,18 @@ public class FilesTool {
 
 					productValue.put(BatchConfig.EXTRAIMAGES, extraImages);
 				}
-				*/
-
-				insertdb(productValue);
+				
+				
+				productValue.put(BatchConfig.ACCOUNTID, accountid + "");
+				
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(initDate);
+				cal.add(Calendar.MINUTE, minutes * k);
+				productValue.put(BatchConfig.SCHEDULETIME, dbtime.format(cal.getTime()));
+				
+				
+				UploadToServer.getInstance().upload(productValue);
 			}
 		}
-	}
-
-	private void insertdb(Map<String, String> productValue) {
-		Iterator<String> it = productValue.keySet().iterator();
-		System.out.println("insertdb:");
-		while (it.hasNext()) {
-			String key = it.next();
-			System.out.println(key + ":" + productValue.get(key));
-		}
-		
-		productValue.put(BatchConfig.ACCOUNTID, "2");//默认使用wish账号2
-		//insert product source;
-		DBHelper helper = new DBHelper();
-		helper.insertProductSource(productValue);
-		
-		
-		//insert product;
-		
-		//insert schedule;
 	}
 }
