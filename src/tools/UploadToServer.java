@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
@@ -22,10 +24,12 @@ import org.apache.http.message.BasicNameValuePair;
 
 public class UploadToServer {
 
+	private static final String APPTOKEN = "javauploadtoservertokena13xja";
 	private static final String UTF8 = "utf-8";
 	//private static final String URL = "http://wishconsole.com/user/batchupload.php";
 	private static final String URL = "http://localhost/wishhelper/user/batchupload.php";
 	private static UploadToServer server;
+	private static final Random random = new Random();
 
 	private UploadToServer() {
 	}
@@ -48,6 +52,17 @@ public class UploadToServer {
 			String key = it.next();
 			nvps.add(new BasicNameValuePair(key, values.get(key)));
 		}
+		
+		//用于md5加密
+		int salt = random.nextInt(10000);
+				
+		// 对token+随机数计算md5值
+		StringBuilder md5String = new StringBuilder();
+		md5String.append(APPTOKEN).append(salt);
+		String md5 = DigestUtils.md5Hex(md5String.toString());
+				
+		nvps.add(new BasicNameValuePair("salt", String.valueOf(salt)));  
+		nvps.add(new BasicNameValuePair("sign", md5)); 	
 		
 		httpost.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
 
